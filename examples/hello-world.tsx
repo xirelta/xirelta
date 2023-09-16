@@ -3,7 +3,7 @@ import { Application } from '../src';
 
 const app = new Application({
   web: {
-    port: 3000,
+    port: Number(process.env.PORT ?? '3000'),
   },
 });
 
