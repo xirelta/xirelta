@@ -9,11 +9,7 @@ const app = new Application({
 
 app.get('/', () => 'hello world');
 
-app.get('/:a/*', (request) => {
-  return (
-    <pre>{JSON.stringify(request, null, 2)}</pre>
-  );
-});
+app.get('/:a/*', (request) => <pre>{JSON.stringify(request, null, 2)}</pre>);
 
 try {
   await app.start();

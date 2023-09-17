@@ -1,13 +1,12 @@
 import { Server, sleep } from 'bun';
+import React from 'react';
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { JsonValue, Simplify } from 'type-fest';
 
 type ExtractParam<Path, NextPart> = Path extends `:${infer Param}` ? Record<Param, string> & NextPart : NextPart;
 
-type ExtractParams<Path> = Path extends `${infer Segment}/${infer Rest}`
-  ? ExtractParam<Segment, ExtractParams<Rest>>
-  : ExtractParam<Path, {}>
+type ExtractParams<Path> = Path extends `${infer Segment}/${infer Rest}` ? ExtractParam<Segment, ExtractParams<Rest>> : ExtractParam<Path, {}>;
 
 const extractPathParams = <T extends string>(path: string, pattern: T): ExtractParams<T> | undefined => {
   const paramNames = (pattern.match(/:[^/]+/g) || []).map((param) => param.slice(1));
@@ -45,7 +44,12 @@ type Config = {
 };
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
-type Handler<T extends Record<string, unknown> = Record<string, unknown>, U extends Method = Method> = (request: { params?: Simplify<T>; path: string; method: U; body?: JsonValue; }) => ReactNode;
+type Handler<T extends Record<string, unknown> = Record<string, unknown>, U extends Method = Method> = (request: {
+  params?: Simplify<T>;
+  path: string;
+  method: U;
+  body?: JsonValue;
+}) => ReactNode | Response | JsonValue;
 
 const getHandlerForURL = (url: string, routeMap: Map<string, Handler>) => {
   for (const [pattern, handler] of routeMap.entries()) {
@@ -69,7 +73,7 @@ export class Application {
   };
   private server?: Server;
 
-  constructor(private config: Config) { }
+  constructor(private config: Config) {}
 
   private method<T extends string, U extends Method>(method: Method | '*', path: T, handler: Handler<ExtractParams<T>, U>) {
     if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
@@ -123,7 +127,7 @@ export class Application {
       fetch: async (request) => {
         const url = new URL(request.url);
         const path = url.pathname;
-        const method = request.method as Method ?? 'GET' as const;
+        const method = (request.method as Method) ?? ('GET' as const);
         const match = getHandlerForURL(path, this.handlers['*']) ?? getHandlerForURL(path, this.handlers[method]);
         if (!match)
           return new Response('404 - Page not found', {
@@ -134,18 +138,18 @@ export class Application {
 
         const { handler, pattern } = match;
         const params = extractPathParams(path, pattern);
-        const body = await new Promise<JsonValue | undefined>(async (resolve, reject) => {
+        const body = await new Promise<JsonValue | undefined>(async (resolve) => {
           try {
             resolve(await request.json());
           } catch {
             try {
-              resolve(await request.text() || undefined);
+              resolve((await request.text()) || undefined);
             } catch {
               resolve(undefined);
             }
           }
         });
-        const Node = await Promise.resolve(
+        const response = await Promise.resolve(
           handler({
             params,
             path,
@@ -153,8 +157,31 @@ export class Application {
             body,
           })
         );
-        const Element = typeof Node === 'function' ? Node : () => Node;
-        return new Response(renderToStaticMarkup(<Element />), {
+
+        // Custom response
+        if (response instanceof Response) return response;
+
+        // JSON response
+        if (!React.isValidElement(response)) {
+          const contentType = (() => {
+            try {
+              JSON.parse(String(response));
+              return 'application/json';
+            } catch {}
+
+            return 'text/plain';
+          })();
+
+          return new Response(String(response), {
+            headers: {
+              'Content-Type': contentType,
+            },
+          });
+        }
+
+        // JSX response
+        const Node = typeof response === 'function' ? response : () => response;
+        return new Response(renderToStaticMarkup(<Node />), {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
           },
@@ -166,12 +193,12 @@ export class Application {
   }
 
   /**
-   * Stop the web server 
+   * Stop the web server
    */
   async stop() {
-    return new Promise<void>(async resolve => {
+    return new Promise<void>(async (resolve) => {
       this.server?.stop();
-      while (((this.server?.pendingRequests ?? 0) + (this.server?.pendingWebSockets ?? 0)) > 1) {
+      while ((this.server?.pendingRequests ?? 0) + (this.server?.pendingWebSockets ?? 0) > 1) {
         await sleep(100);
       }
 
