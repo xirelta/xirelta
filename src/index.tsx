@@ -43,11 +43,12 @@ type Config = {
   };
 };
 
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
-type Handler<T extends Record<string, unknown> = Record<string, unknown>, U extends Method = Method> = (request: {
-  params?: Simplify<T>;
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type Handler<Params extends Record<string, unknown> = Record<string, unknown>, Method extends HttpMethod = HttpMethod> = (request: {
+  params?: Simplify<Params>;
+  query?: Record<string, unknown>;
   path: string;
-  method: U;
+  method: Method;
   body?: JsonValue;
 }) => ReactNode | Response | JsonValue;
 
@@ -75,7 +76,7 @@ export class Application {
 
   constructor(private config: Config) {}
 
-  private method<T extends string, U extends Method>(method: Method | '*', path: T, handler: Handler<ExtractParams<T>, U>) {
+  private method<Path extends string, Method extends HttpMethod>(method: HttpMethod | '*', path: Path, handler: Handler<ExtractParams<Path>, Method>) {
     if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
     this.handlers[method].set(path, handler as Handler);
   }
@@ -127,7 +128,7 @@ export class Application {
       fetch: async (request) => {
         const url = new URL(request.url);
         const path = url.pathname;
-        const method = (request.method as Method) ?? ('GET' as const);
+        const method = (request.method as HttpMethod) ?? ('GET' as const);
         const match = getHandlerForURL(path, this.handlers['*']) ?? getHandlerForURL(path, this.handlers[method]);
         if (!match)
           return new Response('404 - Page not found', {
@@ -138,6 +139,8 @@ export class Application {
 
         const { handler, pattern } = match;
         const params = extractPathParams(path, pattern);
+        const searchParams = [...url.searchParams.entries()];
+        const query = searchParams.length === 0 ? undefined : Object.fromEntries(searchParams);
         const body = await new Promise<JsonValue | undefined>(async (resolve) => {
           try {
             resolve(await request.json());
@@ -152,6 +155,7 @@ export class Application {
         const response = await Promise.resolve(
           handler({
             params,
+            query,
             path,
             method,
             body,
