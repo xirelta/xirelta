@@ -1,4 +1,7 @@
+import { Logger, z } from '@imlunahey/logger';
 import { Server, sleep } from 'bun';
+import { existsSync, readdirSync, statSync } from 'fs';
+import { basename, dirname, join as joinPath } from 'path';
 import React from 'react';
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -40,6 +43,11 @@ const matchesPattern = (url: string, pattern: string) => {
 type Config = {
   web?: {
     port?: number;
+    strictMatching?: boolean;
+  };
+  logger?: {
+    debug(message: string, options: Record<string, unknown>): void;
+    info(message: string, options: Record<string, unknown>): void;
   };
 };
 
@@ -52,9 +60,21 @@ type Handler<Params extends Record<string, unknown> = Record<string, unknown>, M
   body?: JsonValue;
 }) => ReactNode | Response | JsonValue;
 
-const getHandlerForURL = (url: string, routeMap: Map<string, Handler>) => {
+const stripTrailingSlash = (string: string) => {
+  if (string.length === 1) return string;
+  return string.endsWith('/') ? string.slice(0, -1) : string;
+};
+
+const getHandlerForURL = (url: string, routeMap: Map<string, Handler>, strictMatching = false) => {
   for (const [pattern, handler] of routeMap.entries()) {
-    if (matchesPattern(url, pattern)) {
+    if (strictMatching) {
+      if (matchesPattern(url, pattern)) {
+        return {
+          handler,
+          pattern,
+        };
+      }
+    } else if (matchesPattern(stripTrailingSlash(url), pattern) || matchesPattern(stripTrailingSlash(url) + '/', pattern)) {
       return {
         handler,
         pattern,
@@ -62,6 +82,21 @@ const getHandlerForURL = (url: string, routeMap: Map<string, Handler>) => {
     }
   }
   return null;
+};
+
+const getAllFiles = (directoryPath: string, arrayOfFiles: string[] = []) => {
+  for (const filePath of readdirSync(directoryPath)) {
+    // Directory
+    if (statSync(joinPath(directoryPath, filePath)).isDirectory()) arrayOfFiles = getAllFiles(joinPath(directoryPath, filePath), arrayOfFiles);
+    // File
+    else {
+      // Only allow js, ts and tsx
+      const fileName = basename(filePath);
+      if (fileName === 'page.js' || filePath === 'page.ts' || filePath === 'page.tsx') arrayOfFiles.push(joinPath(directoryPath, filePath));
+    }
+  }
+
+  return arrayOfFiles;
 };
 
 export class Application {
@@ -73,11 +108,50 @@ export class Application {
     DELETE: new Map(),
   };
   private server?: Server;
+  private logger: Exclude<Config['logger'], undefined>;
+  private started = false;
 
-  constructor(private config: Config) {}
+  constructor(private config: Config = {}) {
+    this.logger = config.logger ?? {
+      debug(message, options) {
+        console.debug(message, options);
+      },
+      info(message, options) {
+        console.info(message, options);
+      }
+    };
+
+    // If we were provided an instance of @ImLunaHey/Logger rebuild it with our types
+    if (this.logger instanceof Logger) {
+      this.logger = new Logger({
+        service: 'xirelta',
+        schema: {
+          debug: {
+            'Registering route': z.object({
+              path: z.string(),
+              method: z.string(),
+            }),
+            // @ts-expect-error using private properties
+            ...(this.logger.schema?.debug ?? {}),
+          },
+          info: {
+            'Web server started': z.object({ port: z.number() }),
+            'Web server stopping': z.object({
+              pendingRequests: z.number(),
+              pendingWebSockets: z.number(),
+            }),
+            'Web server stopped': z.object({}),
+            // @ts-expect-error using private properties
+            ...(this.logger.schema?.info ?? {}),
+          },
+        }
+      });
+    }
+  }
 
   private method<Path extends string, Method extends HttpMethod>(method: HttpMethod | '*', path: Path, handler: Handler<ExtractParams<Path>, Method>) {
     if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
+    this.logger.debug('Registering route', { method, path });
     this.handlers[method].set(path, handler as Handler);
   }
 
@@ -120,8 +194,32 @@ export class Application {
    * Start the web server on the specified port
    */
   async start() {
-    const port = this.config.web?.port;
-    if (!port) throw new Error('Please set config.web.port first');
+    // Don't allow starting the web server multiple times
+    if (this.started) throw new Error('Application cannot be started more than once');
+    this.started = true;
+
+    // Get web server port, if none is provided try the env PORT, if that fails fall back to a random port
+    const port = this.config.web?.port ?? process.env.PORT ?? 0;
+
+    // Check if pages directory exists in the current directory
+    const pagesDirectoryPath = joinPath(dirname(process.argv[1]), 'pages');
+    const pagesExists = existsSync(pagesDirectoryPath);
+
+    // Add pages routes to router
+    if (pagesExists) {
+      // Get all the routes in the current directory
+      const routes = getAllFiles(pagesDirectoryPath);
+
+      // Add each file as a handler for the matching path
+      for (const route of routes) {
+        try {
+          const fileName = basename(route);
+          const routePath = stripTrailingSlash(route.replace(pagesDirectoryPath, '').replace(fileName, ''));
+          const handler = await import(route).then(_ => _.default);
+          this.method('*', routePath, handler);
+        } catch { }
+      }
+    }
 
     this.server = Bun.serve({
       port,
@@ -129,7 +227,7 @@ export class Application {
         const url = new URL(request.url);
         const path = url.pathname;
         const method = (request.method as HttpMethod) ?? ('GET' as const);
-        const match = getHandlerForURL(path, this.handlers['*']) ?? getHandlerForURL(path, this.handlers[method]);
+        const match = getHandlerForURL(path, this.handlers['*'], this.config.web?.strictMatching) ?? getHandlerForURL(path, this.handlers[method], this.config.web?.strictMatching);
         if (!match)
           return new Response('404 - Page not found', {
             headers: {
@@ -171,7 +269,7 @@ export class Application {
             try {
               JSON.parse(String(response));
               return 'application/json';
-            } catch {}
+            } catch { }
 
             return 'text/plain';
           })();
@@ -193,18 +291,35 @@ export class Application {
       },
     });
 
-    console.info(`Web server started http://localhost:${port}`);
+    process.on('SIGINT', async () => {
+      await this.stop();
+    });
+
+    this.logger.info('Web server started', {
+      port: this.server.port,
+    });
   }
 
   /**
    * Stop the web server
    */
   async stop() {
+    this.logger.info('Web server stopping', {
+      pendingRequests: this.server?.pendingRequests,
+      pendingWebSockets: this.server?.pendingWebSockets,
+    });
+
     return new Promise<void>(async (resolve) => {
       this.server?.stop();
       while ((this.server?.pendingRequests ?? 0) + (this.server?.pendingWebSockets ?? 0) > 1) {
+        this.logger.debug('Web server stopping', {
+          pendingRequests: this.server?.pendingRequests,
+          pendingWebSockets: this.server?.pendingWebSockets,
+        });
         await sleep(100);
       }
+
+      this.logger.info('Web server stopped', {});
 
       resolve();
     });

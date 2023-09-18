@@ -61,5 +61,8 @@
         ".yarn/build-state.yml": true,
         ".yarn/install-state.gz": true,
         "**/.pnp.\\*": true
-    }
+    },
+    "cSpell.words": [
+        "xirelta"
+    ]
 }
