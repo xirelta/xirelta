@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Logger, z } from '@imlunahey/logger';
+import { Logger } from '@imlunahey/logger';
 import { Application } from '../src';
 
 const app = new Application({

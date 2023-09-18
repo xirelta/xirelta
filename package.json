@@ -5,9 +5,12 @@
   "type": "module",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
+  "bin": {
+    "xirelta": "./dist/xirelta.js"
+  },
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsup ./src/index.tsx --dts --external=bun --format=esm --treeshake --clean --minify"
+    "build": "tsup"
   },
   "devDependencies": {
     "bun-types": "latest"
