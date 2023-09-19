@@ -1,6 +1,6 @@
 {
   "name": "xirelta",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "dist/index.js",
   "module": "src/index.ts",
   "dependencies": {
@@ -25,7 +25,8 @@
   "scripts": {
     "prepare": "npm run build",
     "build": "tsup",
-    "test": "bun test"
+    "test": "bun test",
+    "coverage": "bun test --coverage"
   },
   "type": "module",
   "types": "dist/index.d.ts",
