@@ -17,5 +17,5 @@ jobs:
         with:
           bun-version: latest
       - run: bun i
-      - run: bun run build --if-present
+      - run: bun run build
       - run: bun run coverage
