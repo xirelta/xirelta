@@ -311,6 +311,7 @@ export class Application {
    */
   async stop() {
     if (this.state !== 'STARTED') return;
+    this.state = 'STOPPING';
 
     this.logger.info('Web server stopping', {
       pendingRequests: this.server?.pendingRequests,
@@ -318,16 +319,17 @@ export class Application {
     });
 
     return new Promise<void>(async resolve => {
-      this.server?.stop();
+      this.server?.stop(true);
       while ((this.server?.pendingRequests ?? 0) + (this.server?.pendingWebSockets ?? 0) > 1) {
         this.logger.debug('Web server stopping', {
           pendingRequests: this.server?.pendingRequests,
           pendingWebSockets: this.server?.pendingWebSockets,
         });
-        await sleep(1_000);
+        await sleep(100);
       }
 
       this.logger.info('Web server stopped', {});
+      this.state = 'STOPPED';
 
       resolve();
     });
