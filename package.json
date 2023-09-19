@@ -1,8 +1,9 @@
 {
   "name": "xirelta",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "main": "dist/index.js",
   "module": "src/index.ts",
+  "license": "MIT",
   "dependencies": {
     "@imlunahey/logger": "latest",
     "chalk": "^5.3.0",
