@@ -300,6 +300,10 @@ export class Application {
     this.logger.info('Web server started', {
       port: this.server.port,
     });
+
+    return {
+      port: this.server.port,
+    };
   }
 
   /**
