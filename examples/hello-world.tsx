@@ -9,6 +9,14 @@ const app = new Application({
 
 app.get('/', () => 'hello world');
 
+app.get('/json', () => ({
+  a: 1,
+  b: {
+    c: '2',
+  },
+  d: true,
+}));
+
 app.get('/:a/*', (request) => <pre>{JSON.stringify(request, null, 2)}</pre>);
 
 try {
