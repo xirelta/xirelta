@@ -267,14 +267,14 @@ export class Application {
         if (!React.isValidElement(response)) {
           const contentType = (() => {
             try {
-              JSON.parse(String(response));
+              JSON.parse(JSON.stringify(response));
               return 'application/json';
             } catch { }
 
             return 'text/plain';
           })();
 
-          return new Response(String(response), {
+          return new Response(JSON.stringify(response, null, 0), {
             headers: {
               'Content-Type': contentType,
             },
