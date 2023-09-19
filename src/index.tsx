@@ -109,7 +109,7 @@ export class Application {
   };
   private server?: Server;
   private logger: Exclude<Config['logger'], undefined>;
-  private started = false;
+  private state: 'STARTING' | 'STARTED' | 'STOPPING' | 'STOPPED' = 'STOPPED';
 
   constructor(private config: Config = {}) {
     this.logger = config.logger ?? {
@@ -195,8 +195,8 @@ export class Application {
    */
   async start() {
     // Don't allow starting the web server multiple times
-    if (this.started) throw new Error('Application cannot be started more than once');
-    this.started = true;
+    if (this.state !== 'STOPPED') throw new Error('Application cannot be started more than once');
+    this.state = 'STARTING';
 
     // Get web server port, if none is provided try the env PORT, if that fails fall back to a random port
     const port = this.config.web?.port ?? process.env.PORT ?? 0;
@@ -293,8 +293,10 @@ export class Application {
 
     process.on('SIGINT', async () => {
       await this.stop();
+      process.exit(0);
     });
 
+    this.state = 'STARTED';
     this.logger.info('Web server started', {
       port: this.server.port,
     });
@@ -304,19 +306,21 @@ export class Application {
    * Stop the web server
    */
   async stop() {
+    if (this.state !== 'STARTED') return;
+
     this.logger.info('Web server stopping', {
       pendingRequests: this.server?.pendingRequests,
       pendingWebSockets: this.server?.pendingWebSockets,
     });
 
-    return new Promise<void>(async (resolve) => {
+    return new Promise<void>(async resolve => {
       this.server?.stop();
       while ((this.server?.pendingRequests ?? 0) + (this.server?.pendingWebSockets ?? 0) > 1) {
         this.logger.debug('Web server stopping', {
           pendingRequests: this.server?.pendingRequests,
           pendingWebSockets: this.server?.pendingWebSockets,
         });
-        await sleep(100);
+        await sleep(1_000);
       }
 
       this.logger.info('Web server stopped', {});
