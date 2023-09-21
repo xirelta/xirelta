@@ -1,5 +1,5 @@
 import '@total-typescript/ts-reset';
-import { expect, mock, spyOn, test } from 'bun:test';
+import { expect, test } from 'bun:test';
 import { Application } from './index';
 import { Logger } from '@imlunahey/logger';
 import { JsonValue } from 'type-fest';

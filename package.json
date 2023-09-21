@@ -25,7 +25,9 @@
   ],
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsup",
+    "build:lib": "tsup",
+    "build:cli": "bun build --compile ./src/cli.ts --outfile ./dist/xirelta",
+    "build": "bun run build:lib && npm run build:cli",
     "test": "bun test",
     "coverage": "bun test --coverage"
   },
