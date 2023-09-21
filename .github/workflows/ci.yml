@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install packages
+        run: bun i
+
+      - name: Check code coverage
+        run: bun run coverage
+
+  bump-version:
+    needs: coverage
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install packages
+        run: bun i
+
+      - name: Build library and CLI
+        run: bun run build
+
+      - name: Bump package version
+        run: npx standard-version
+
+      - name: Push changes
+        run: git push --follow-tags origin main
