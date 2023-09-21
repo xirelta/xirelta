@@ -89,6 +89,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Create package for github release
+        run: npm pack
+
       - name: Create Github release
         uses: ncipollo/release-action@v1.13.0
         with:
