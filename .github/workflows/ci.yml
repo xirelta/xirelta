@@ -34,6 +34,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Set git email
+        run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Set git name
+        run: git config --global user.name "github-actions[bot]"
+
       - name: Install bun
         uses: oven-sh/setup-bun@v1
         with:
