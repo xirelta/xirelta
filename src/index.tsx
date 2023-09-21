@@ -258,13 +258,18 @@ export class Application {
     return this.server;
   }
 
+  private getPagesDirectory(): string | null {
+    // Check "./pages", "./src/pages" and lastly "./dist/pages"
+    // If none of these exist we don't have a pages directory
+    return [joinPath(process.cwd(), 'pages'), joinPath(process.cwd(), 'src/pages'), joinPath(process.cwd(), 'dist/pages')].filter(path => existsSync(path))?.[0] ?? null;
+  };
+
   private async loadPages() {
-    // Check if pages directory exists in the current directory
-    const pagesDirectoryPath = joinPath(process.cwd(), 'pages');
-    const pagesExists = existsSync(pagesDirectoryPath);
+    // Find pages directory
+    const pagesDirectoryPath = this.getPagesDirectory();
 
     // Add pages to router
-    if (pagesExists) {
+    if (pagesDirectoryPath) {
       // Get all the pages in the current directory
       const pages = await getPages(pagesDirectoryPath);
 
