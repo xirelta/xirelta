@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "prepare": "npm run build",
+    "prepare": "bun run build",
     "build": "tsup",
     "test": "bun test",
     "coverage": "bun test --coverage"
