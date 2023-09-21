@@ -1,4 +1,4 @@
-import { Logger, z } from '../../logger/src/logger';
+import { Logger, z } from '@imlunahey/logger';
 import { Server, sleep } from 'bun';
 import { existsSync } from 'fs';
 import { join as joinPath } from 'path';
