@@ -1,9 +1,13 @@
+#!/usr/bin/env bun
+
 import chalk from 'chalk';
 import { Logger } from '../../logger/src/logger';
 import { Application } from '../src';
 
 const app = new Application({
-    logger: console,
+    logger: new Logger({
+        service: 'xirelta',
+    }),
 });
 
 try {

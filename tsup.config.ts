@@ -14,5 +14,6 @@ export default defineConfig({
     external: ['bun'],
     entry: {
         index: './src/index.tsx',
+        xirelta: './src/cli.ts',
     },
 });
