@@ -99,4 +99,4 @@ jobs:
           name: ${{ steps.current_tag.outputs.current_tag }}
           body: ${{ steps.changelog.outputs.changes }}
           token: ${{ github.token }}
-          artifacts: '*.tgz'
+          artifacts: '${{ github.workspace }}/*.tgz'
