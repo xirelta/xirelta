@@ -1,1 +1,1 @@
-export default () => 4444;
+export default (...args: any[]) => args;
