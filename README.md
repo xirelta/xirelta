@@ -6,7 +6,6 @@
 
 Xirelta is a lightweight web framework for building web applications in TypeScript with Bun. It is designed to be flexible and easy to use, allowing you to create web services and applications with minimal effort.
 
-
 ## Installation
 
 You can install Xirelta using Bun:

@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   coverage:
@@ -25,9 +24,10 @@ jobs:
       - name: Check code coverage
         run: bun run coverage
 
-  bump-version:
+  bump_version:
+    # DO NOT RUN ON PR
+    if: github.event_name != 'pull_request'
     needs: coverage
-
     runs-on: ubuntu-latest
 
     permissions:
@@ -36,12 +36,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
-      - name: Set git email
-        run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Set git name
-        run: git config --global user.name "github-actions[bot]"
+        with:
+          fetch-depth: 0
 
       - name: Install bun
         uses: oven-sh/setup-bun@v1
@@ -51,11 +47,56 @@ jobs:
       - name: Install packages
         run: bun i
 
-      - name: Build library and CLI
-        run: bun run build
+      - name: Set git email
+        run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Set git name
+        run: git config --global user.name "github-actions[bot]"
+
+      - name: Get previous tag
+        id: previous_tag
+        run: |
+          echo "previous_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
 
       - name: Bump package version
         run: npx standard-version
 
+      - name: Get current tag
+        id: current_tag
+        run: |
+          echo "current_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+
       - name: Push changes
         run: git push --follow-tags origin main
+
+      - name: Generate CHANGELOG for Github release
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          fromTag: ${{ steps.current_tag.outputs.current_tag }}
+          toTag: ${{ steps.previous_tag.outputs.previous_tag }}
+          writeToFile: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create Github release
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          allowUpdates: true
+          draft: false
+          makeLatest: true
+          tag: ${{ steps.current_tag.outputs.current_tag }}
+          name: ${{ steps.current_tag.outputs.current_tag }}
+          body: ${{ steps.changelog.outputs.changes }}
+          token: ${{ github.token }}
+          artifacts: '*.tgz'
