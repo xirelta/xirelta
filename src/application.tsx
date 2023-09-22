@@ -6,10 +6,9 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { JsonValue } from 'type-fest';
 import { ExtractParams, extractPathParams } from './common/extract-params';
-import { matchesPattern } from './common/matches-pattern';
 import { getPages } from './common/get-pages';
 import { Handler, HttpMethod } from './common/types';
-import { stripTrailingSlash } from './common/strip-trailing-slash';
+import { getHandlerForURL } from './common/get-handler-for-url';
 
 type Config = {
   web?: {
@@ -21,40 +20,6 @@ type Config = {
     info(message: string, options: Record<string, unknown>): void;
     error(message: string, options: Record<string, unknown>): void;
   };
-};
-
-const getHandlerForURL = (url: string, routeMap: Map<string, Handler<string>>, strictMatching = false) => {
-  const matches = [];
-  for (const [pattern, handler] of routeMap.entries()) {
-    if (strictMatching) {
-      if (matchesPattern(url, pattern)) {
-        matches.push({
-          handler,
-          pattern,
-        });
-      }
-    } else if (matchesPattern(stripTrailingSlash(url), pattern) || matchesPattern(stripTrailingSlash(url) + '/', pattern)) {
-      matches.push({
-        handler,
-        pattern,
-      });
-    }
-  }
-
-  // Sort the matches to prioritize more specific (non-parameterized) patterns
-  const sortedMatches = matches.sort((a, b) => {
-    const aIsParam = a.pattern.includes(":");
-    const bIsParam = b.pattern.includes(":");
-
-    // Return the match without the param first
-    if (aIsParam && !bIsParam) return 1;
-    if (!aIsParam && bIsParam) return -1;
-
-    // If both are the same type, maintain original order
-    return 0;
-  });
-
-  return sortedMatches[0];
 };
 
 export class Application {
@@ -89,6 +54,10 @@ export class Application {
         schema: {
           debug: {
             'Registering route': z.object({
+              path: z.string(),
+              method: z.string(),
+            }),
+            'Registering page': z.object({
               path: z.string(),
               method: z.string(),
             }),
@@ -282,8 +251,11 @@ export class Application {
       // Add each page's handler to the matching path
       for (const page of pages) {
         try {
-          this.logger.debug('Registering page', { page });
-          this.method('*', page.path, page.handler);
+          this.logger.debug('Registering page', {
+            path: page.path,
+            method: page.method,
+          });
+          this.method(page.method, page.path, page.handler);
         } catch (error) {
           this.logger.error('Failed registering route', {
             page,

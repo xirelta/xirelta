@@ -49,7 +49,7 @@ export const getPages = async <Directory extends string>(directory: Directory): 
 
         // Import the handler file
         return await import(filePath).then(_ => Object.entries(_).map(([method, handler]) => ({
-            method: method === 'default' ? '*' : method,
+            method: method === 'default' ? '*' : method.toUpperCase(),
             handler,
             path: routePath,
         }) as Page<Directory>).filter(Boolean)).catch(() => []);
