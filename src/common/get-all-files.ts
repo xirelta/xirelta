@@ -6,9 +6,7 @@ export const getAllFiles = (directoryPath: string, arrayOfFiles: string[] = []) 
         // Directory
         if (statSync(joinPath(directoryPath, filePath)).isDirectory()) arrayOfFiles = getAllFiles(joinPath(directoryPath, filePath), arrayOfFiles);
         // File
-        else {
-            arrayOfFiles.push(joinPath(directoryPath, filePath));
-        }
+        else arrayOfFiles.push(joinPath(directoryPath, filePath));
     }
 
     return arrayOfFiles;
