@@ -11,4 +11,4 @@ export type Handler<Path extends string, Params extends Record<string, unknown> 
     headers: Record<string, unknown>;
     safeHeaders: Record<string, unknown>;
     body?: JsonValue;
-}) => ReactNode | Response | JsonValue | Promise<JsonValue>;
+}) => ReactNode | Response | JsonValue | Promise<ReactNode> | Promise<Response> | Promise<JsonValue>;
