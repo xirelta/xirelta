@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.25](https://github.com/xirelta/xirelta/compare/v0.0.24...v0.0.25) (2023-09-22)
+
+
+### Bug Fixes
+
+* custom methods in pages directory ([d60777f](https://github.com/xirelta/xirelta/commit/d60777fcb64e1fda46cd6635eac0428e7ffeda6f))
+
 ### [0.0.24](https://github.com/xirelta/xirelta/compare/v0.0.23...v0.0.24) (2023-09-22)
 
 ### [0.0.23](https://github.com/ImLunaHey/xirelta/compare/v0.0.22...v0.0.23) (2023-09-21)
