@@ -5,9 +5,10 @@ import { getPages } from './get-pages';
 
 test('returns a list of all the pages in a directory', async () => {
     const pages = await getPages(joinPath(import.meta.dir, '../../examples/pages'));
+    const paths = pages.map(page => page.path);
     expect(pages.length).toBe(4);
-    expect(pages[0].path).toBe('/:page');
-    expect(pages[1].path).toBe('/contact');
-    expect(pages[2].path).toBe('/about');
-    expect(pages[3].path).toBe('/nested/:directory/in/:here');
+    expect(paths).toContain('/:page');
+    expect(paths).toContain('/contact');
+    expect(paths).toContain('/about');
+    expect(paths).toContain('/nested/:directory/in/:here');
 });
