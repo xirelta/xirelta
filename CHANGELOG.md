@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.26](https://github.com/xirelta/xirelta/compare/v0.0.25...v0.0.26) (2023-09-22)
+
+
+### Features
+
+* allow Promise for route return type ([bb5abad](https://github.com/xirelta/xirelta/commit/bb5abaddb6b6aab5f3849aecefa0ee385ad26a97))
+
 ### [0.0.25](https://github.com/xirelta/xirelta/compare/v0.0.24...v0.0.25) (2023-09-22)
 
 
