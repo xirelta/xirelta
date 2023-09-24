@@ -164,7 +164,7 @@ export class Application {
         const { handler, pattern } = match;
         const params = extractPathParams(path, pattern) ?? {};
         const searchParams = [...url.searchParams.entries()];
-        const { cookie, ...safeHeaders } = Object.fromEntries([...url.searchParams.entries()]);
+        const { cookie, ...safeHeaders } = Object.fromEntries(request.headers.entries());
         const query = searchParams.length === 0 ? {} : Object.fromEntries(searchParams);
         const body = await new Promise<JsonValue | undefined>(async (resolve) => {
           const text = await request.text();
