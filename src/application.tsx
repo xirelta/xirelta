@@ -143,7 +143,7 @@ export class Application {
     };
   }
 
-  private fetch(request: Request) {
+  private async fetch(request: Request) {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = (request.method as HttpMethod) ?? ('GET' as const);
