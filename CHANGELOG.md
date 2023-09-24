@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.28](https://github.com/xirelta/xirelta/compare/v0.0.27...v0.0.28) (2023-09-24)
+
+
+### Bug Fixes
+
+* better types ([d351551](https://github.com/xirelta/xirelta/commit/d351551d58a91d18235c4f61aafbf2127f92bdb3))
+
 ### [0.0.27](https://github.com/xirelta/xirelta/compare/v0.0.26...v0.0.27) (2023-09-22)
 
 
