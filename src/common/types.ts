@@ -45,5 +45,5 @@ export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*',
     /**
      * The request body, if present.
      */
-    body: Method extends 'GET' ? never : JsonValue;
+    body: Method extends 'GET' ? undefined : JsonValue;
 }>>) => Simplify<Body>;

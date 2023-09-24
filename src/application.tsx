@@ -162,10 +162,10 @@ export class Application {
           });
 
         const { handler, pattern } = match;
-        const params = extractPathParams(path, pattern);
+        const params = extractPathParams(path, pattern) ?? {};
         const searchParams = [...url.searchParams.entries()];
         const { cookie, ...safeHeaders } = Object.fromEntries([...url.searchParams.entries()]);
-        const query = searchParams.length === 0 ? undefined : Object.fromEntries(searchParams);
+        const query = searchParams.length === 0 ? {} : Object.fromEntries(searchParams);
         const body = await new Promise<JsonValue | undefined>(async (resolve) => {
           const text = await request.text();
           switch (safeHeaders['Content-Type']) {
@@ -183,7 +183,7 @@ export class Application {
               } catch { }
               // Fall back to text
               try {
-                resolve((await request.text()) || undefined);
+                resolve(await request.text());
               } catch {
                 resolve(undefined);
               }
