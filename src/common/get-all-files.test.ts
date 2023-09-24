@@ -4,5 +4,5 @@ import { getAllFiles } from './get-all-files';
 import { join as joinPath } from 'path';
 
 test('returns a list of all the files in a directory', async () => {
-    expect(getAllFiles(joinPath(import.meta.dir, '../../examples')).length).toBe(6);
+    expect(getAllFiles(joinPath(import.meta.dir, '../../examples')).length).toBe(7);
 });

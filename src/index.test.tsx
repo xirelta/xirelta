@@ -78,7 +78,7 @@ test('server can be stopped (stop method)', async () => {
     app.get('/', () => 'ok');
 
     const server = await app.start();
-    expect(await fetch(`http://localhost:${server.port}/`).then(response => response.text())).toStrictEqual('"ok"');
+    expect(await fetch(`http://localhost:${server.port}/`).then(response => response.text())).toStrictEqual('ok');
     await app.stop();
     expect(await fetch(`http://localhost:${server.port}/`).catch(error => error instanceof Error ? error.message : error)).toBe('Unable to connect. Is the computer able to access the url?');
 });
