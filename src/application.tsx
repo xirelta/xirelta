@@ -168,7 +168,7 @@ export class Application {
         const query = searchParams.length === 0 ? {} : Object.fromEntries(searchParams);
         const body = await new Promise<JsonValue | undefined>(async (resolve) => {
           const text = await request.text();
-          switch (safeHeaders['Content-Type']) {
+          switch (safeHeaders['content-type']) {
             case 'application/x-www-form-urlencoded':
               try {
                 return Object.fromEntries(text.split(',').map((_) => {
