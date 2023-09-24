@@ -1,18 +1,22 @@
 import '@total-typescript/ts-reset';
 import { getAllFiles } from './get-all-files';
 import { stripTrailingSlash } from './strip-trailing-slash';
-import { ExtractParams } from './extract-params';
-import { Handler, HttpMethod } from './types';
+import { Handler, HttpMethod, ResponseBody } from './types';
+import { JsonValue } from 'type-fest';
 
-type Page<Path extends string> = {
-    path: string;
-    method: HttpMethod | '*';
-    handler: Handler<Path, ExtractParams<Path>>;
+type Page<
+    Method extends HttpMethod | "*",
+    Path extends string,
+    Body extends ResponseBody<true> = JsonValue,
+> = {
+    path: Path;
+    method: Method;
+    handler: Handler<true, Method, Path, Body>;
 };
 
 const paramRouteRegex = /\[([a-z0-9_\-]*)\]/g;
 
-export const getPages = async <Directory extends string>(directory: Directory): Promise<Page<Directory>[]> => {
+export const getPages = async <Directory extends string>(directory: Directory): Promise<Page<'*', Directory>[]> => {
     const files = getAllFiles(directory);
     return await Promise.all(files.map(async filePath => {
         const routePath = filePath
@@ -52,6 +56,6 @@ export const getPages = async <Directory extends string>(directory: Directory): 
             method: method === 'default' ? '*' : method.toUpperCase(),
             handler,
             path: routePath,
-        }) as Page<Directory>).filter(Boolean)).catch(() => []);
+        }) as Page<'*', Directory>).filter(Boolean)).catch(() => []);
     })).then(_ => _.flat());
 };

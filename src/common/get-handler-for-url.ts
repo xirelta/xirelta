@@ -2,7 +2,7 @@ import { matchesPattern } from './matches-pattern';
 import { stripTrailingSlash } from './strip-trailing-slash';
 import { Handler } from './types';
 
-export const getHandlerForURL = (url: string, routeMap: Map<string, Handler<string>>, strictMatching = false) => {
+export const getHandlerForURL = (url: string, routeMap: Map<string, Handler<any, any, any, any>>, strictMatching = false) => {
     const matches = [];
     for (const [pattern, handler] of routeMap.entries()) {
         if (strictMatching) {

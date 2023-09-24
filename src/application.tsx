@@ -24,11 +24,11 @@ type Config = {
 
 export class Application {
   private handlers = {
-    '*': new Map(),
-    GET: new Map(),
-    POST: new Map(),
-    PUT: new Map(),
-    DELETE: new Map(),
+    '*': new Map<string, Handler<any, any, any, any>>(),
+    GET: new Map<string, Handler<any, any, any, any>>(),
+    POST: new Map<string, Handler<any, any, any, any>>(),
+    PUT: new Map<string, Handler<any, any, any, any>>(),
+    DELETE: new Map<string, Handler<any, any, any, any>>(),
   };
   private server?: Server;
   private logger: Exclude<Config['logger'], undefined>;
@@ -53,13 +53,11 @@ export class Application {
         service: 'xirelta',
         schema: {
           debug: {
-            'Registering route': z.object({
-              path: z.string(),
-              method: z.string(),
-            }),
-            'Registering page': z.object({
-              path: z.string(),
-              method: z.string(),
+            'Registered routes': z.object({
+              routes: z.array(z.object({
+                path: z.string(),
+                method: z.string(),
+              }))
             }),
             'Web server closing connections': z.object({
               pendingRequests: z.number(),
@@ -81,7 +79,6 @@ export class Application {
   }
 
   private method<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, Body extends ResponseBody<StrictMode>>(method: Method, path: Path, handler: Handler<StrictMode, Method, Path, Body>) {
-    this.logger.debug('Registering route', { method, path });
     if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
     this.handlers[method].set(path, handler);
   }
@@ -131,6 +128,12 @@ export class Application {
 
     // Load pages directory
     await this.loadPages();
+
+    // Log what routes we have loaded
+    const routes = Object.entries(this.handlers).flatMap(([method, routes]) => [...routes.entries()].map(([path, handler]) => ({ method, path })));
+    this.logger.debug('Registered routes', {
+      routes,
+    });
 
     // Start web server
     const server = await this.startWebServer();
@@ -194,16 +197,10 @@ export class Application {
 
         // JSON response
         if (!React.isValidElement(response)) {
-          const contentType = (() => {
-            try {
-              JSON.parse(JSON.stringify(response));
-              return 'application/json';
-            } catch { }
+          const stringifiedResponse = typeof response === 'string' ? response : JSON.stringify(response, (key, value) => typeof value === 'function' ? '[function]' : value, 0);
+          const contentType = (stringifiedResponse.startsWith('{') && stringifiedResponse.endsWith('}')) ? 'application/json' : 'text/plain';
 
-            return 'text/plain';
-          })();
-
-          return new Response(JSON.stringify(response, null, 0), {
+          return new Response(stringifiedResponse, {
             headers: {
               'Content-Type': contentType,
             },
@@ -251,13 +248,9 @@ export class Application {
       // Add each page's handler to the matching path
       for (const page of pages) {
         try {
-          this.logger.debug('Registering page', {
-            path: page.path,
-            method: page.method,
-          });
           this.method(page.method, page.path, page.handler);
         } catch (error) {
-          this.logger.error('Failed registering route', {
+          this.logger.error('Failed registering page', {
             page,
             error,
           });
