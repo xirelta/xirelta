@@ -1,14 +1,17 @@
 import { ReactNode } from 'react';
-import { Simplify, JsonValue } from 'type-fest';
+import { JsonValue, Simplify } from 'type-fest';
+import { ExtractParams } from './extract-params';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-export type Handler<Path extends string, Params extends Record<string, unknown> = Record<string, unknown>, Method extends HttpMethod | '*' = HttpMethod | '*'> = (request: {
-    params?: Simplify<Params>;
-    query?: Record<string, unknown>;
+type MaybePromise<T> = T | Promise<T>;
+
+export type Handler<Method extends HttpMethod | '*', Path extends string, StrictMode extends boolean = false> = (request: {
+    params?: Simplify<ExtractParams<Path>>;
+    query?: Simplify<Record<string, unknown>>;
     path: Path;
     method: Method;
-    headers: Record<string, unknown>;
-    safeHeaders: Record<string, unknown>;
+    headers: Simplify<Record<string, unknown>>;
+    safeHeaders: Simplify<Record<string, unknown>>;
     body?: JsonValue;
-}) => ReactNode | Response | JsonValue | Promise<ReactNode> | Promise<Response> | Promise<JsonValue>;
+}) => Simplify<MaybePromise<ReactNode> | MaybePromise<Response> | MaybePromise<StrictMode extends true ? JsonValue : unknown>>;

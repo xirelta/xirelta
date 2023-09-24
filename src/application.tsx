@@ -5,7 +5,7 @@ import { join as joinPath } from 'path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { JsonValue } from 'type-fest';
-import { ExtractParams, extractPathParams } from './common/extract-params';
+import { extractPathParams } from './common/extract-params';
 import { getPages } from './common/get-pages';
 import { Handler, HttpMethod } from './common/types';
 import { getHandlerForURL } from './common/get-handler-for-url';
@@ -80,44 +80,44 @@ export class Application {
     }
   }
 
-  private method<Path extends string, Method extends HttpMethod>(method: HttpMethod | '*', path: Path, handler: Handler<Path, ExtractParams<Path>, Method>) {
+  private method<Method extends HttpMethod | '*', Path extends string>(method: Method, path: Path, handler: Handler<Method, Path>) {
     this.logger.debug('Registering route', { method, path });
     if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
-    this.handlers[method].set(path, handler as Handler<Path, ExtractParams<Path>, Method>);
+    this.handlers[method].set(path, handler);
   }
 
   /**
    * ALL methods
    */
-  all<Path extends string>(path: Path, handler: Handler<Path, ExtractParams<Path>, 'GET'>) {
+  all<Path extends string>(path: Path, handler: Handler<'*', Path>) {
     this.method('*', path, handler);
   }
 
   /**
    * GET method
    */
-  get<Path extends string>(path: Path, handler: Handler<Path, ExtractParams<Path>, 'GET'>) {
+  get<Path extends string>(path: Path, handler: Handler<'GET', Path>) {
     this.method('GET', path, handler);
   }
 
   /**
    * POST method
    */
-  post<Path extends string>(path: Path, handler: Handler<Path, ExtractParams<Path>, 'POST'>) {
+  post<Path extends string>(path: Path, handler: Handler<'POST', Path>) {
     this.method('POST', path, handler);
   }
 
   /**
    * PUT method
    */
-  put<Path extends string>(path: Path, handler: Handler<Path, ExtractParams<Path>, 'PUT'>) {
+  put<Path extends string>(path: Path, handler: Handler<'PUT', Path>) {
     this.method('PUT', path, handler);
   }
 
   /**
    * DELETE method
    */
-  delete<Path extends string>(path: Path, handler: Handler<Path, ExtractParams<Path>, 'DELETE'>) {
+  delete<Path extends string>(path: Path, handler: Handler<'DELETE', Path>) {
     this.method('DELETE', path, handler);
   }
 
