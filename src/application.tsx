@@ -167,13 +167,26 @@ export class Application {
         const { cookie, ...safeHeaders } = Object.fromEntries([...url.searchParams.entries()]);
         const query = searchParams.length === 0 ? undefined : Object.fromEntries(searchParams);
         const body = await new Promise<JsonValue | undefined>(async (resolve) => {
-          try {
-            resolve(await request.json() as JsonValue);
-          } catch {
-            try {
-              resolve((await request.text()) || undefined);
-            } catch {
-              resolve(undefined);
+          const text = await request.text();
+          switch (safeHeaders['Content-Type']) {
+            case 'application/x-www-form-urlencoded':
+              try {
+                return Object.fromEntries(text.split(',').map((_) => {
+                  const [a, b] = _.split('=');
+                  return [a, b];
+                }))
+              } catch { }
+            default: {
+              // Try JSON first
+              try {
+                resolve(await request.json() as JsonValue);
+              } catch { }
+              // Fall back to text
+              try {
+                resolve((await request.text()) || undefined);
+              } catch {
+                resolve(undefined);
+              }
             }
           }
         });
