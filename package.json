@@ -4,6 +4,10 @@
   "main": "dist/index.js",
   "module": "src/index.ts",
   "license": "MIT",
+  "homepage": "https://xirelta.com",
+  "bugs": {
+    "url": "https://github.com/xirelta/xirelta/issues"
+  },
   "dependencies": {
     "@imlunahey/logger": "latest",
     "chalk": "^5.3.0",
