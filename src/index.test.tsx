@@ -70,9 +70,6 @@ test('server can be stopped (stop method)', async () => {
         logger: new Logger({
             service: 'test',
         }),
-        web: {
-            port: 3000,
-        }
     });
 
     app.get('/', () => 'ok');

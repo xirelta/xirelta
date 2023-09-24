@@ -171,21 +171,21 @@ export class Application {
           switch (safeHeaders['content-type']) {
             case 'application/x-www-form-urlencoded':
               try {
-                return Object.fromEntries(text.split(',').map((_) => {
+                return resolve(Object.fromEntries(text.split(',').map((_) => {
                   const [a, b] = _.split('=');
                   return [a, b];
-                }))
+                })));
               } catch { }
             default: {
               // Try JSON first
               try {
-                resolve(await request.json() as JsonValue);
+                return resolve(await request.json() as JsonValue);
               } catch { }
               // Fall back to text
               try {
-                resolve(await request.text());
+                return resolve(await request.text());
               } catch {
-                resolve(undefined);
+                return resolve(undefined);
               }
             }
           }
