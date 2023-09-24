@@ -5,6 +5,10 @@
   "module": "src/index.ts",
   "license": "MIT",
   "homepage": "https://xirelta.com",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/xirelta/xirelta.git"
+  },
   "bugs": {
     "url": "https://github.com/xirelta/xirelta/issues"
   },
