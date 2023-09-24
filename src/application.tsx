@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { JsonValue } from 'type-fest';
 import { extractPathParams } from './common/extract-params';
 import { getPages } from './common/get-pages';
-import { Handler, HttpMethod } from './common/types';
+import { Handler, HttpMethod, ResponseBody } from './common/types';
 import { getHandlerForURL } from './common/get-handler-for-url';
 
 type Config = {
@@ -80,7 +80,7 @@ export class Application {
     }
   }
 
-  private method<Method extends HttpMethod | '*', Path extends string>(method: Method, path: Path, handler: Handler<Method, Path>) {
+  private method<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, Body extends ResponseBody<StrictMode>>(method: Method, path: Path, handler: Handler<StrictMode, Method, Path, Body>) {
     this.logger.debug('Registering route', { method, path });
     if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
     this.handlers[method].set(path, handler);
@@ -89,35 +89,35 @@ export class Application {
   /**
    * ALL methods
    */
-  all<Path extends string>(path: Path, handler: Handler<'*', Path>) {
+  all<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, '*', Path, Body>) {
     this.method('*', path, handler);
   }
 
   /**
    * GET method
    */
-  get<Path extends string>(path: Path, handler: Handler<'GET', Path>) {
+  get<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, 'GET', Path, Body>) {
     this.method('GET', path, handler);
   }
 
   /**
    * POST method
    */
-  post<Path extends string>(path: Path, handler: Handler<'POST', Path>) {
+  post<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, 'POST', Path, Body>) {
     this.method('POST', path, handler);
   }
 
   /**
    * PUT method
    */
-  put<Path extends string>(path: Path, handler: Handler<'PUT', Path>) {
+  put<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, 'PUT', Path, Body>) {
     this.method('PUT', path, handler);
   }
 
   /**
    * DELETE method
    */
-  delete<Path extends string>(path: Path, handler: Handler<'DELETE', Path>) {
+  delete<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, 'DELETE', Path, Body>) {
     this.method('DELETE', path, handler);
   }
 
