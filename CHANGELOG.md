@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.35](https://github.com/xirelta/xirelta/compare/v0.0.34...v0.0.35) (2023-09-24)
+
+
+### Bug Fixes
+
+* headers not being set ([f7ef441](https://github.com/xirelta/xirelta/commit/f7ef4416238ccaae3105eeca7968e9173c3be0f2))
+
 ### [0.0.34](https://github.com/xirelta/xirelta/compare/v0.0.33...v0.0.34) (2023-09-24)
 
 
