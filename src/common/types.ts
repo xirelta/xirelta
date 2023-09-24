@@ -34,11 +34,11 @@ export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*',
     /**
      * The headers included in the request.
      */
-    headers: Simplify<Record<string, unknown>>;
+    headers: Simplify<Record<string, string>>;
     /**
      * A subset of headers considered safe.
      */
-    safeHeaders: Simplify<Record<string, unknown>>;
+    safeHeaders: Simplify<Record<string, string>>;
     /**
      * The request body, if present.
      */
