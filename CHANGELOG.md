@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.29](https://github.com/xirelta/xirelta/compare/v0.0.28...v0.0.29) (2023-09-24)
+
+
+### Features
+
+* add body type support ([98cabe1](https://github.com/xirelta/xirelta/commit/98cabe144365a534905f64ba33e7079bd83a530e))
+
 ### [0.0.28](https://github.com/xirelta/xirelta/compare/v0.0.27...v0.0.28) (2023-09-24)
 
 
