@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.33](https://github.com/xirelta/xirelta/compare/v0.0.32...v0.0.33) (2023-09-24)
+
+
+### Bug Fixes
+
+* parsing of json response body ([32b4e97](https://github.com/xirelta/xirelta/commit/32b4e97bcdc09b504524128ffb9b4b092d012c95))
+
 ### [0.0.32](https://github.com/xirelta/xirelta/compare/v0.0.31...v0.0.32) (2023-09-24)
 
 ### [0.0.31](https://github.com/xirelta/xirelta/compare/v0.0.30...v0.0.31) (2023-09-24)
