@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.38](https://github.com/xirelta/xirelta/compare/v0.0.37...v0.0.38) (2023-09-24)
+
+
+### Bug Fixes
+
+* make .fetch async ([4b58552](https://github.com/xirelta/xirelta/commit/4b585529ee2ca6419a3adace660b30a76f455754))
+* memory leak on request and text not resolving ([af49329](https://github.com/xirelta/xirelta/commit/af49329c2ef61dc27866df6e442c5216543af7ef))
+
 ### [0.0.37](https://github.com/xirelta/xirelta/compare/v0.0.36...v0.0.37) (2023-09-24)
 
 
