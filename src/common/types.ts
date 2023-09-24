@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { JsonValue, Simplify } from 'type-fest';
 import { ExtractParams } from './extract-params';
+import { ExtractQuery } from './extract-query';
 
 /**
  * Represents the HTTP methods.
@@ -12,17 +13,19 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
  */
 export type MaybePromise<T> = T | Promise<T>;
 
+export type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
+
 export type ResponseBody<StrictMode extends boolean = false> = Simplify<MaybePromise<ReactNode> | MaybePromise<Response> | MaybePromise<StrictMode extends true ? JsonValue : unknown>>;
 
-export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, Body extends ResponseBody<StrictMode>> = (request: {
+export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, Body extends ResponseBody<StrictMode>> = (request: Simplify<OmitNever<{
     /**
      * Path parameters extracted from the URL.
      */
-    params?: Simplify<ExtractParams<Path>>;
+    params: Simplify<ExtractParams<Path>>;
     /**
      * Query parameters parsed from the URL.
      */
-    query?: Simplify<Record<string, unknown>>;
+    query: Simplify<ExtractQuery<Path>>;
     /**
      * The request path.
      */
@@ -42,5 +45,5 @@ export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*',
     /**
      * The request body, if present.
      */
-    body?: JsonValue;
-}) => Simplify<Body>;
+    body: Method extends 'GET' ? never : JsonValue;
+}>>) => Simplify<Body>;
