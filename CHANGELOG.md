@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.36](https://github.com/xirelta/xirelta/compare/v0.0.35...v0.0.36) (2023-09-24)
+
+
+### Bug Fixes
+
+* content-type is always lowercase ([fd62429](https://github.com/xirelta/xirelta/commit/fd624291b460fbfb44126ba42ad243be95228415))
+
 ### [0.0.35](https://github.com/xirelta/xirelta/compare/v0.0.34...v0.0.35) (2023-09-24)
 
 
