@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.34](https://github.com/xirelta/xirelta/compare/v0.0.33...v0.0.34) (2023-09-24)
+
+
+### Features
+
+* add form-urlencoded support ([a704e23](https://github.com/xirelta/xirelta/commit/a704e236967e472ae1c33bd8a8b25a4df1c08e21))
+
+
+### Bug Fixes
+
+* headers are always strings ([79e1160](https://github.com/xirelta/xirelta/commit/79e11605bc0d18bcd77df3440309db62ca87fdd5))
+
 ### [0.0.33](https://github.com/xirelta/xirelta/compare/v0.0.32...v0.0.33) (2023-09-24)
 
 
