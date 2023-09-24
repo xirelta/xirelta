@@ -1,6 +1,6 @@
 {
   "name": "xirelta",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "main": "dist/index.js",
   "module": "src/index.ts",
   "license": "MIT",

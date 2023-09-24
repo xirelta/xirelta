@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.37](https://github.com/xirelta/xirelta/compare/v0.0.36...v0.0.37) (2023-09-24)
+
+
+### Bug Fixes
+
+* application/x-www-form-urlencoded not resolving ([b3a45ea](https://github.com/xirelta/xirelta/commit/b3a45ea9219aa5fdfcb0ef158a440e0970eddff1))
+
 ### [0.0.36](https://github.com/xirelta/xirelta/compare/v0.0.35...v0.0.36) (2023-09-24)
 
 
