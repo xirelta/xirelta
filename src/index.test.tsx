@@ -102,3 +102,39 @@ test('server can be stopped (stop method)', async () => {
 //     expect(exits.length).toBe(1);
 //     expect(await fetch(`http://localhost:${server.port}/`).catch(error => error instanceof Error ? error.message : error)).toBe('Unable to connect. Is the computer able to access the url?');
 // });
+
+
+test('allows param + named routes at same position', async () => {
+    const app = new Application({
+        logger: new Logger({
+            service: 'test',
+        }),
+    });
+
+    app.get('/google-redirect.txt1', () => 'google-redirect.txt1');
+    app.get('/:userId', request => ({
+        userId: request.params.userId,
+    }));
+    app.get('/google-redirect.txt2', () => 'google-redirect.txt2');
+
+    const server = await app.start();
+
+    // First route
+    const googleRedirectResponse1 = await fetch(`http://localhost:${server.port}/google-redirect.txt1`);
+    expect(await googleRedirectResponse1.text()).toStrictEqual('google-redirect.txt1');
+    expect(googleRedirectResponse1.status).toStrictEqual(200);
+
+    // Second route
+    const userIdResponse = await fetch(`http://localhost:${server.port}/123`);
+    expect(await userIdResponse.json()).toStrictEqual({
+        userId: '123',
+    });
+    expect(userIdResponse.status).toStrictEqual(200);
+
+    // Third route
+    const googleRedirectResponse2 = await fetch(`http://localhost:${server.port}/google-redirect.txt2`);
+    expect(await googleRedirectResponse2.text()).toStrictEqual('google-redirect.txt2');
+    expect(googleRedirectResponse2.status).toStrictEqual(200);
+
+    await app.stop();
+});
