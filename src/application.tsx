@@ -143,6 +143,86 @@ export class Application {
     };
   }
 
+  private fetch(request: Request) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = (request.method as HttpMethod) ?? ('GET' as const);
+    const match = getHandlerForURL(path, this.handlers['*'], this.config.web?.strictMatching) ?? getHandlerForURL(path, this.handlers[method], this.config.web?.strictMatching);
+    if (!match)
+      return new Response('404 - Page not found', {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+        },
+      });
+
+    const { handler, pattern } = match;
+    const params = extractPathParams(path, pattern) ?? {};
+    const searchParams = [...url.searchParams.entries()];
+    const { cookie, ...safeHeaders } = Object.fromEntries(request.headers.entries());
+    const query = searchParams.length === 0 ? {} : Object.fromEntries(searchParams);
+    const body = await new Promise<JsonValue | undefined>(async (resolve) => {
+      const text = await request.text();
+      switch (safeHeaders['content-type']) {
+        case 'application/x-www-form-urlencoded':
+          try {
+            return resolve(Object.fromEntries(text.split(',').map((_) => {
+              const [a, b] = _.split('=');
+              return [a, b];
+            })));
+          } catch { }
+        default: {
+          // Try JSON first
+          try {
+            return resolve(await request.json() as JsonValue);
+          } catch { }
+          // Fall back to text
+          try {
+            return resolve(text);
+          } catch {
+            return resolve(undefined);
+          }
+        }
+      }
+    });
+    const response = await Promise.resolve(
+      handler({
+        params,
+        query,
+        path,
+        headers: {
+          cookie,
+          ...safeHeaders,
+        },
+        safeHeaders,
+        method,
+        body,
+      })
+    );
+
+    // Custom response
+    if (response instanceof Response) return response;
+
+    // JSON response
+    if (!React.isValidElement(response)) {
+      const stringifiedResponse = typeof response === 'string' ? response : JSON.stringify(response, (key, value) => typeof value === 'function' ? '[function]' : value, 0);
+      const contentType = (stringifiedResponse.startsWith('{') && stringifiedResponse.endsWith('}')) ? 'application/json' : 'text/plain';
+
+      return new Response(stringifiedResponse, {
+        headers: {
+          'Content-Type': contentType,
+        },
+      });
+    }
+
+    // JSX response
+    const Node = typeof response === 'function' ? response : () => response;
+    return new Response(renderToStaticMarkup(<Node />), {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
+  }
+
   private async startWebServer() {
     // Get web server port, if none is provided try the env PORT, if that fails fall back to a random port
     const port = this.config.web?.port ?? process.env.PORT ?? 0;
@@ -150,84 +230,9 @@ export class Application {
     this.server = Bun.serve({
       port,
       fetch: async (request) => {
-        const url = new URL(request.url);
-        const path = url.pathname;
-        const method = (request.method as HttpMethod) ?? ('GET' as const);
-        const match = getHandlerForURL(path, this.handlers['*'], this.config.web?.strictMatching) ?? getHandlerForURL(path, this.handlers[method], this.config.web?.strictMatching);
-        if (!match)
-          return new Response('404 - Page not found', {
-            headers: {
-              'Content-Type': 'text/plain; charset=utf-8',
-            },
-          });
-
-        const { handler, pattern } = match;
-        const params = extractPathParams(path, pattern) ?? {};
-        const searchParams = [...url.searchParams.entries()];
-        const { cookie, ...safeHeaders } = Object.fromEntries(request.headers.entries());
-        const query = searchParams.length === 0 ? {} : Object.fromEntries(searchParams);
-        const body = await new Promise<JsonValue | undefined>(async (resolve) => {
-          const text = await request.text();
-          switch (safeHeaders['content-type']) {
-            case 'application/x-www-form-urlencoded':
-              try {
-                return resolve(Object.fromEntries(text.split(',').map((_) => {
-                  const [a, b] = _.split('=');
-                  return [a, b];
-                })));
-              } catch { }
-            default: {
-              // Try JSON first
-              try {
-                return resolve(await request.json() as JsonValue);
-              } catch { }
-              // Fall back to text
-              try {
-                return resolve(await request.text());
-              } catch {
-                return resolve(undefined);
-              }
-            }
-          }
-        });
-        const response = await Promise.resolve(
-          handler({
-            params,
-            query,
-            path,
-            headers: {
-              cookie,
-              ...safeHeaders,
-            },
-            safeHeaders,
-            method,
-            body,
-          })
-        );
-
-        // Custom response
-        if (response instanceof Response) return response;
-
-        // JSON response
-        if (!React.isValidElement(response)) {
-          const stringifiedResponse = typeof response === 'string' ? response : JSON.stringify(response, (key, value) => typeof value === 'function' ? '[function]' : value, 0);
-          const contentType = (stringifiedResponse.startsWith('{') && stringifiedResponse.endsWith('}')) ? 'application/json' : 'text/plain';
-
-          return new Response(stringifiedResponse, {
-            headers: {
-              'Content-Type': contentType,
-            },
-          });
-        }
-
-        // JSX response
-        const Node = typeof response === 'function' ? response : () => response;
-        return new Response(renderToStaticMarkup(<Node />), {
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-          },
-        });
-      },
+        Bun.gc(true);
+        return this.fetch(request);
+      }
     });
 
     process.on('SIGINT', async () => {
