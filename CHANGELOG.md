@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.44](https://github.com/xirelta/xirelta/compare/v0.0.43...v0.0.44) (2023-09-25)
+
+
+### Bug Fixes
+
+* x-www-form-urlencoded ([b3bc014](https://github.com/xirelta/xirelta/commit/b3bc01461032cbf0e74b2b3725bf23a9510fa0cb))
+
 ### [0.0.43](https://github.com/xirelta/xirelta/compare/v0.0.42...v0.0.43) (2023-09-25)
 
 ### [0.0.42](https://github.com/xirelta/xirelta/compare/v0.0.41...v0.0.42) (2023-09-25)
