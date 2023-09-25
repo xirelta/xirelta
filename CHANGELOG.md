@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.46](https://github.com/xirelta/xirelta/compare/v0.0.45...v0.0.46) (2023-09-25)
+
+
+### Features
+
+* add middleware support ([072c8e2](https://github.com/xirelta/xirelta/commit/072c8e28dd7a8a0f28e22382c40373a942918640))
+
 ### [0.0.45](https://github.com/xirelta/xirelta/compare/v0.0.44...v0.0.45) (2023-09-25)
 
 ### [0.0.44](https://github.com/xirelta/xirelta/compare/v0.0.43...v0.0.44) (2023-09-25)
