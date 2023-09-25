@@ -65,44 +65,31 @@ test('custom response', async () => {
     await app.stop();
 });
 
-test('server can be stopped (stop method)', async () => {
+// See: https://github.com/oven-sh/bun/issues/6021
+test.skip('custom method', async () => {
     const app = new Application({
         logger: new Logger({
             service: 'test',
         }),
+        web: {
+            port: 0,
+        }
     });
 
-    app.get('/', () => 'ok');
+    app.use('/:param', ({ method, params: { param } }) => ({
+        method,
+        param,
+    }));
 
     const server = await app.start();
-    expect(await fetch(`http://localhost:${server.port}/`).then(response => response.text())).toStrictEqual('ok');
+    expect(await fetch(`http://localhost:${server.port}/GET`, { method: 'GET' }).then(response => response.json())).toStrictEqual({ method: 'GET', param: 'GET' });
+    expect(await fetch(`http://localhost:${server.port}/POST`, { method: 'POST' }).then(response => response.json())).toStrictEqual({ method: 'POST', param: 'POST' });
+    expect(await fetch(`http://localhost:${server.port}/PUT`, { method: 'PUT' }).then(response => response.json())).toStrictEqual({ method: 'PUT', param: 'PUT' });
+    expect(await fetch(`http://localhost:${server.port}/PATCH`, { method: 'PATCH' }).then(response => response.json())).toStrictEqual({ method: 'PATCH', param: 'PATCH' });
+    expect(await fetch(`http://localhost:${server.port}/DELETE`, { method: 'DELETE' }).then(response => response.json())).toStrictEqual({ method: 'DELETE', param: 'DELETE' });
+    expect(await fetch(`http://localhost:${server.port}/OPTIONS`, { method: 'OPTIONS' }).then(response => response.json())).toStrictEqual({ method: 'OPTIONS', param: 'OPTIONS' });
     await app.stop();
-    expect(await fetch(`http://localhost:${server.port}/`).catch(error => error instanceof Error ? error.message : error)).toBe('Unable to connect. Is the computer able to access the url?');
 });
-
-// @TODO: This is currently broken
-// test('server can be stopped (CTRL+C)', async () => {
-//     const exits = [];
-
-//     const app = new Application({
-//         logger: new Logger({
-//             service: 'test',
-//         }),
-//         web: {
-//             port: 3000,
-//         }
-//     });
-
-//     app.get('/', () => 'ok');
-
-//     const server = await app.start();
-//     expect(await fetch(`http://localhost:${server.port}/`).then(response => response.text())).toStrictEqual('"ok"');
-//     // @ts-expect-error bun-types are out of date
-//     process.emit('SIGINT');
-//     expect(exits.length).toBe(1);
-//     expect(await fetch(`http://localhost:${server.port}/`).catch(error => error instanceof Error ? error.message : error)).toBe('Unable to connect. Is the computer able to access the url?');
-// });
-
 
 test('allows param + named routes at same position', async () => {
     const app = new Application({

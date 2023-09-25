@@ -4,17 +4,24 @@ import { existsSync } from 'fs';
 import { join as joinPath } from 'path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { JsonValue } from 'type-fest';
+import { JsonValue, PartialDeep } from 'type-fest';
 import { extractPathParams } from './common/extract-params';
 import { getPages } from './common/get-pages';
 import { Handler, HttpMethod, ResponseBody } from './common/types';
 import { getHandlerForURL } from './common/get-handler-for-url';
+import { SimplifyDeep } from 'type-fest/source/merge-deep';
+import queryString from 'query-string';
 
-type Config = {
-  web?: {
-    port?: number;
-    strictMatching?: boolean;
-  };
+type WebConfig = {
+  port: number;
+  strictMatching: boolean;
+  pages: {
+    directory: string;
+  }
+};
+
+export type Config = {
+  web?: SimplifyDeep<PartialDeep<WebConfig>>;
   logger?: {
     debug(message: string, options: Record<string, unknown>): void;
     info(message: string, options: Record<string, unknown>): void;
@@ -31,7 +38,7 @@ export class Application {
     DELETE: new Map<string, Handler<any, any, any, any>>(),
   };
   private server?: Server;
-  private logger: Exclude<Config['logger'], undefined>;
+  public readonly logger: Exclude<Config['logger'], undefined>;
   private state: 'STARTING' | 'STARTED' | 'STOPPING' | 'STOPPED' = 'STOPPED';
 
   constructor(private config: Config = {}) {
@@ -86,7 +93,7 @@ export class Application {
   /**
    * ALL methods
    */
-  all<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, '*', Path, Body>) {
+  use<StrictMode extends boolean, Path extends string, Body extends ResponseBody<StrictMode>>(path: Path, handler: Handler<StrictMode, '*', Path, Body>) {
     this.method('*', path, handler);
   }
 
@@ -165,10 +172,7 @@ export class Application {
       switch (safeHeaders['content-type']) {
         case 'application/x-www-form-urlencoded':
           try {
-            return resolve(Object.fromEntries(text.split(',').map((_) => {
-              const [a, b] = _.split('=');
-              return [a, b];
-            })));
+            return resolve(queryString.parse(`?${text}`, { arrayFormat: 'colon-list-separator' }));
           } catch { }
         default: {
           // Try JSON first
@@ -248,9 +252,14 @@ export class Application {
   }
 
   private getPagesDirectory(): string | null {
-    // Check "./pages", "./src/pages" and lastly "./dist/pages"
+    // Check the paths the user provided, "./pages", "./src/pages" and lastly "./dist/pages"
     // If none of these exist we don't have a pages directory
-    return [joinPath(process.cwd(), 'pages'), joinPath(process.cwd(), 'src/pages'), joinPath(process.cwd(), 'dist/pages')].filter(path => existsSync(path))?.[0] ?? null;
+    return [
+      this.config.web?.pages?.directory,
+      joinPath(process.cwd(), 'pages'),
+      joinPath(process.cwd(), 'src/pages'),
+      joinPath(process.cwd(), 'dist/pages')
+    ].filter(path => path && existsSync(path))?.[0] ?? null;
   };
 
   private async loadPages() {
@@ -288,10 +297,6 @@ export class Application {
     return new Promise<void>(async resolve => {
       this.server?.stop(true);
       while ((this.server?.pendingRequests ?? 0) + (this.server?.pendingWebSockets ?? 0) > 1) {
-        this.logger.debug('Web server closing connections', {
-          pendingRequests: this.server?.pendingRequests,
-          pendingWebSockets: this.server?.pendingWebSockets,
-        });
         await sleep(100);
       }
 
