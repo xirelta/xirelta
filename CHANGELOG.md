@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.49](https://github.com/xirelta/xirelta/compare/v0.0.48...v0.0.49) (2023-09-25)
+
+
+### Features
+
+* more fields on health endpoint ([d52bdda](https://github.com/xirelta/xirelta/commit/d52bdda9a6501fc42b68bf231ea800de58f7ae35))
+
+
+### Bug Fixes
+
+* add missing dep ([ca0bcca](https://github.com/xirelta/xirelta/commit/ca0bcca82cda7ea829e2f827886a1396c047a9f5))
+* missing types ([822aa49](https://github.com/xirelta/xirelta/commit/822aa4904b34169cd86f704bb5cc031f5974f937))
+* use correct content-type for health endpoint ([7530765](https://github.com/xirelta/xirelta/commit/7530765b966e936cde4032c74a3ecbb93004df37))
+
 ### [0.0.48](https://github.com/xirelta/xirelta/compare/v0.0.47...v0.0.48) (2023-09-25)
 
 
