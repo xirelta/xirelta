@@ -15,19 +15,22 @@ import queryString from 'query-string';
 type WebConfig = {
   port: number;
   strictMatching: boolean;
-  pages: {
-    directory: string;
+  pages?: {
+    directory?: string;
   }
-  errorHandler: ErrorHandler<any, any, any, any>;
+  healthCheck: boolean;
+  errorHandler?: ErrorHandler<any, any, any, any>;
+};
+
+type BasicLogger = {
+  debug(message: string, options: Record<string, unknown>): void;
+  info(message: string, options: Record<string, unknown>): void;
+  error(message: string, options: Record<string, unknown>): void;
 };
 
 export type Config = {
   web?: SimplifyDeep<PartialDeep<WebConfig>>;
-  logger?: {
-    debug(message: string, options: Record<string, unknown>): void;
-    info(message: string, options: Record<string, unknown>): void;
-    error(message: string, options: Record<string, unknown>): void;
-  };
+  logger?: BasicLogger;
 };
 
 export class Application {
@@ -41,8 +44,27 @@ export class Application {
   private server?: Server;
   public readonly logger: Exclude<Config['logger'], undefined>;
   private state: 'STARTING' | 'STARTED' | 'STOPPING' | 'STOPPED' = 'STOPPED';
+  private config: {
+    web: SimplifyDeep<WebConfig>;
+    logger?: BasicLogger;
+  };
 
-  constructor(private config: Config = {}) {
+  constructor(config: Config = {}) {
+    // Add config
+    this.config = {
+      ...config,
+      web: {
+        ...config.web,
+        // Get web server port, if none is provided try the env PORT, if that fails fall back to a random port
+        port: Number(config.web?.port ?? process.env.PORT ?? 0),
+        // By default mount a health check at /.well-known/health
+        healthCheck: config.web?.healthCheck ?? true,
+        // By default allow matching a URL with and without a trailing slash
+        strictMatching: config.web?.strictMatching ?? false,
+      },
+    };
+
+    // Setup app-wide logger
     this.logger = config.logger ?? {
       debug(message, options) {
         console.debug(message, options);
@@ -151,7 +173,23 @@ export class Application {
   async start() {
     // Don't allow starting the web server multiple times
     if (this.state !== 'STOPPED') throw new Error('Application cannot be started more than once');
+
     this.state = 'STARTING';
+
+    // If health checks are enabled add them
+    if (this.config.web?.healthCheck) this.get('/.well-known/health', () => {
+      // If the web server isn't started then we're in a failure mode
+      if (this.state !== 'STARTED') return new Response(JSON.stringify({
+        status: 'fail',
+      }), {
+        status: 503,
+      });
+
+      // Otherwise all is okay
+      return {
+        status: 'pass',
+      };
+    });
 
     // Load pages directory
     await this.loadPages();
@@ -164,6 +202,8 @@ export class Application {
 
     // Start web server
     const server = await this.startWebServer();
+
+    this.state = 'STARTED';
 
     return {
       port: server.port,
@@ -318,8 +358,7 @@ export class Application {
   }
 
   private async startWebServer() {
-    // Get web server port, if none is provided try the env PORT, if that fails fall back to a random port
-    const port = this.config.web?.port ?? process.env.PORT ?? 0;
+    const port = this.config.web.port;
 
     this.server = Bun.serve({
       port,
@@ -333,7 +372,6 @@ export class Application {
       process.exit(0);
     });
 
-    this.state = 'STARTED';
     this.logger.info('Web server started', {
       port: this.server.port,
     });
