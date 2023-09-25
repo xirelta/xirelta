@@ -11,6 +11,8 @@ import { ErrorHandler, Handler, HttpMethod, ResponseBody } from './common/types'
 import { getHandlerForURL } from './common/get-handler-for-url';
 import { SimplifyDeep } from 'type-fest/source/merge-deep';
 import queryString from 'query-string';
+import semver from 'semver';
+import { getCommitHash } from './common/get-commit-hash';
 
 type WebConfig = {
   port: number;
@@ -176,10 +178,21 @@ export class Application {
 
     this.state = 'STARTING';
 
+    // Get the version of the current application
+    const version = await import(`${process.cwd()}/package.json`).then(pkg => semver.parse(pkg.version)?.major).catch(() => 'unknown');
+    const releaseId = await import(`${process.cwd()}/package.json`).then(pkg => `${pkg.version}+${getCommitHash(process.cwd())}`).catch(() => 'unknown');
+
     // If health checks are enabled add them
     if (this.config.web?.healthCheck) this.get('/.well-known/health', () => {
+      const fields = {
+        version,
+        releaseId,
+        time: new Date().toISOString(),
+      };
+
       // If the web server isn't started then we're in a failure mode
       if (this.state !== 'STARTED') return new Response(JSON.stringify({
+        ...fields,
         status: 'fail',
       }), {
         status: 503,
@@ -187,6 +200,7 @@ export class Application {
 
       // Otherwise all is okay
       return {
+        ...fields,
         status: 'pass',
       };
     });
@@ -386,7 +400,7 @@ export class Application {
       this.config.web?.pages?.directory,
       joinPath(process.cwd(), 'pages'),
       joinPath(process.cwd(), 'src/pages'),
-      joinPath(process.cwd(), 'dist/pages')
+      joinPath(process.cwd(), 'dist/pages'),
     ].filter(path => path && existsSync(path))?.[0] ?? null;
   };
 
