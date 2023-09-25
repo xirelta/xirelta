@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.42](https://github.com/xirelta/xirelta/compare/v0.0.41...v0.0.42) (2023-09-25)
+
 ### [0.0.41](https://github.com/xirelta/xirelta/compare/v0.0.40...v0.0.41) (2023-09-25)
 
 
