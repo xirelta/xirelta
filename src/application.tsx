@@ -79,8 +79,8 @@ export class Application {
   }
 
   private method<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, Body extends ResponseBody<StrictMode>>(method: Method, path: Path, handler: Handler<StrictMode, Method, Path, Body>) {
-    if (this.handlers[method].has(path)) throw new Error('This path already has a handler bound');
-    this.handlers[method].set(path, handler);
+    if (this.handlers[method.toUpperCase() as Method].has(path)) throw new Error('This path already has a handler bound');
+    this.handlers[method.toUpperCase() as Method].set(path, handler);
   }
 
   /**
@@ -146,7 +146,7 @@ export class Application {
   private async fetch(request: Request) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const method = (request.method as HttpMethod) ?? ('GET' as const);
+    const method = (request.method as HttpMethod) ?? ('GET' as const).toUpperCase();
     const match = getHandlerForURL(path, this.handlers['*'], this.config.web?.strictMatching) ?? getHandlerForURL(path, this.handlers[method], this.config.web?.strictMatching);
     if (!match)
       return new Response('404 - Page not found', {
