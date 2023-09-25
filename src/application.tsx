@@ -56,6 +56,18 @@ export class Application {
 
     // If we were provided an instance of @ImLunaHey/Logger rebuild it with our types
     if (this.logger instanceof Logger) {
+      type ZErrorType = {
+        name: string;
+        message: string;
+        stack: string;
+        cause?: ZErrorType | undefined;
+      }
+      const ZError: z.ZodType<ZErrorType> = z.lazy(() => z.object({
+        name: z.string(),
+        message: z.string(),
+        stack: z.string(),
+        cause: ZError.or(z.undefined()),
+      }));
       this.logger = new Logger({
         service: 'xirelta',
         schema: {
@@ -80,6 +92,13 @@ export class Application {
             // @ts-expect-error using private properties
             ...(this.logger.schema?.info ?? {}),
           },
+          error: {
+            'Error in after middleware': z.object({
+              error: ZError,
+            }),
+            // @ts-expect-error using private properties
+            ...(this.logger.schema?.error ?? {}),
+          }
         }
       });
     }
@@ -150,8 +169,16 @@ export class Application {
     };
   }
 
+  private errorResponse(message: string = 'Internal Server Error', code: number = 500) {
+    return new Response(`${code} - ${message}`, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
+  }
+
   private notFoundResponse() {
-    return new Response('404 - Page not found', {
+    return new Response('404 - Not Found', {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
       },
@@ -205,27 +232,51 @@ export class Application {
       context: {},
     };
 
-    const NextFunction = async () => { };
+    const StopFunctionSymbol = Symbol('StopFunction');
+    const StopFunction = async () => StopFunctionSymbol;
 
     // Loop through all handler before middleware, then the handler itself and lastly the after middleware
     // If any of them return a response we return it and stop going through middleware
-    // Note: next() does nothing its just there for DX
+    // Note: If stop() is returned at any point we stop processing middleware
     const beforeAndMainHandler = [...handler.before ?? [], handler];
     let response: any = undefined;
-    while (response === undefined && beforeAndMainHandler.length !== 0) {
+    let error: Error | undefined = undefined;
+    while (true) {
+      if (beforeAndMainHandler.length === 0) break;
+      if (response === StopFunctionSymbol) break;
       const currentHandler = beforeAndMainHandler.shift();
       if (!currentHandler) return this.notFoundResponse();
-      response = await Promise.resolve(currentHandler(_request, NextFunction));
+      try {
+        response = await Promise.resolve(currentHandler(_request, StopFunction, error));
+      } catch (responseError: unknown) {
+        error = responseError instanceof Error ? responseError : new Error('Unknown Error', { cause: responseError });
+      }
     }
 
-    // Now that the request has a response run all of the after handlers until one of them returns
+    // Now that the before middleware has run and the handler itself has run
+    // let's try the after handlers, each of them should run 
     const afterHandlers = handler.after ?? [];
     let afterHandlersDone = undefined;
-    while (afterHandlersDone !== NextFunction && afterHandlers.length !== 0) {
+    while (true) {
+      if (afterHandlers.length === 0) break;
+      if (afterHandlersDone === StopFunctionSymbol) break;
       const afterHandler = afterHandlers.shift();
       if (!afterHandler) return this.notFoundResponse();
-      afterHandlersDone = await Promise.resolve(afterHandler(_request, NextFunction));
+      try {
+        afterHandlersDone = await Promise.resolve(afterHandler(_request, StopFunction, error));
+      } catch (afterError: unknown) {
+        this.logger.error('Error in after middleware', {
+          error: afterError instanceof Error ? afterError : new Error('Unknown Error', { cause: afterError }),
+        })
+      }
+
+      // If we didn't get a response from the before or main handler let the after reply
+      // This is useful for people who want a custom 404/error page
+      if (!response) response = afterHandlersDone;
     }
+
+    // If we still have no response but do have an error render that out
+    if (!response) return this.errorResponse(error instanceof Error ? error.message : 'Internal Server Error');
 
     // Custom response
     if (response instanceof Response) return response;

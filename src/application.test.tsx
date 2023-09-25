@@ -207,19 +207,60 @@ test('middleware', async () => {
         param,
     });
 
-    route.before = [((request, next) => {
+    route.before = [((request, stop) => {
         request.context.started = new Date().getTime().toString();
-        return next();
+        return stop();
     })];
 
-    route.after = [((request, next) => {
+    route.after = [((request, stop) => {
         console.log(`${request.path} took ${new Date().getTime() - Number(request.context.started)}ms`);
-        return next();
+        return stop();
     })];
 
     app.get('/:param', route);
 
     const server = await app.start();
     expect(await fetch(`http://localhost:${server.port}/GET`, { method: 'GET' }).then(response => response.json())).toStrictEqual({ method: 'GET', param: 'GET' });
+    await app.stop();
+});
+
+test('throwing stops middleware', async () => {
+    const app = new Application({
+        logger: new Logger({
+            service: 'test',
+        }),
+        web: {
+            port: 0,
+        }
+    });
+
+    type Route = RouteWithParams<'GET', '/:param'>;
+
+    let a = 1;
+
+    const route: Route = ({ method, params: { param } }) => {
+        a = 2;
+        return {
+            method,
+            param,
+        };
+    };
+
+    route.before = [((request, stop) => {
+        throw new Error('123');
+    })];
+
+    route.after = [((request, stop) => {
+        a = 3;
+        return {
+            a,
+        };
+    })];
+
+    app.get('/:param', route);
+
+    const server = await app.start();
+    expect(await fetch(`http://localhost:${server.port}/GET`, { method: 'GET' }).then(response => response.text())).toBe('500 - 123');
+    expect(a).toBe(1);
     await app.stop();
 });

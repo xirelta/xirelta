@@ -20,37 +20,50 @@ export type ResponseBody<StrictMode extends boolean = false> = Simplify<MaybePro
 export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, T extends ResponseBody<StrictMode>> = {
     before?: Handler<StrictMode, Method, Path, T>[];
     after?: Handler<StrictMode, Method, Path, T>[];
-} & ((request: Simplify<OmitNever<{
+} & ((
     /**
-     * Path parameters extracted from the URL.
+     * The current request.
      */
-    params: Simplify<ExtractParams<Path>>;
+    request: Simplify<OmitNever<{
+        /**
+         * Path parameters extracted from the URL.
+         */
+        params: Simplify<ExtractParams<Path>>;
+        /**
+         * Query parameters parsed from the URL.
+         */
+        query: Simplify<ExtractQuery<Path>>;
+        /**
+         * The request path.
+         */
+        path: Path;
+        /**
+         * The HTTP method of the request.
+         */
+        method: Method;
+        /**
+         * The headers included in the request.
+         */
+        headers: Simplify<Record<string, string>>;
+        /**
+         * A subset of headers considered safe.
+         */
+        safeHeaders: Simplify<Record<string, string>>;
+        /**
+         * The request body, if present.
+         */
+        body: Method extends 'GET' ? undefined : JsonValue;
+        /**
+         * Shared context within the current request.
+         */
+        context: Simplify<Record<string, string>>;
+    }>>,
     /**
-     * Query parameters parsed from the URL.
+     * Return this function to stop the route from processing.
      */
-    query: Simplify<ExtractQuery<Path>>;
+    stop: () => Promise<Symbol>,
     /**
-     * The request path.
+     * This will be set if an error occurred in this request in an earlier middleware.
      */
-    path: Path;
-    /**
-     * The HTTP method of the request.
-     */
-    method: Method;
-    /**
-     * The headers included in the request.
-     */
-    headers: Simplify<Record<string, string>>;
-    /**
-     * A subset of headers considered safe.
-     */
-    safeHeaders: Simplify<Record<string, string>>;
-    /**
-     * The request body, if present.
-     */
-    body: Method extends 'GET' ? undefined : JsonValue;
-    /**
-     * Shared context within the current request.
-     */
-    context: Record<string, unknown>;
-}>>, next: () => Promise<void>) => Simplify<T>);
+    error?: Error,
+) => T);
