@@ -29,12 +29,14 @@ contact.before = [(request, stop) => {
     console.log(5);
 }];
 
-contact.after = [(request, stop, error) => {
+contact.after = [(request, stop) => {
     console.log(`${request.path} took ${new Date().getTime() - Number(request.context.started)}ms`);
     throw new Error('1234');
     // return stop();
-}, (r, s, error) => {
-    return new Response(`AN ERROR!!!!! ${error?.message}`);
 }];
+
+contact.error = (request, error) => {
+    return new Response(`AN ERROR!!!!! ${error?.message}`);
+};
 
 export default contact;

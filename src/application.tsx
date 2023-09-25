@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { JsonValue, PartialDeep } from 'type-fest';
 import { extractPathParams } from './common/extract-params';
 import { getPages } from './common/get-pages';
-import { Handler, HttpMethod, ResponseBody } from './common/types';
+import { ErrorHandler, Handler, HttpMethod, ResponseBody } from './common/types';
 import { getHandlerForURL } from './common/get-handler-for-url';
 import { SimplifyDeep } from 'type-fest/source/merge-deep';
 import queryString from 'query-string';
@@ -18,6 +18,7 @@ type WebConfig = {
   pages: {
     directory: string;
   }
+  errorHandler: ErrorHandler<any, any, any, any>;
 };
 
 export type Config = {
@@ -242,12 +243,12 @@ export class Application {
     let response: any = undefined;
     let error: Error | undefined = undefined;
     while (true) {
-      if (beforeAndMainHandler.length === 0) break;
-      if (response === StopFunctionSymbol) break;
       const currentHandler = beforeAndMainHandler.shift();
-      if (!currentHandler) return this.notFoundResponse();
+      if (response === StopFunctionSymbol) break;
+      if (!currentHandler) break;
+      if (error) break;
       try {
-        response = await Promise.resolve(currentHandler(_request, StopFunction, error));
+        response = await Promise.resolve(currentHandler(_request, StopFunction));
       } catch (responseError: unknown) {
         error = responseError instanceof Error ? responseError : new Error('Unknown Error', { cause: responseError });
       }
@@ -258,16 +259,17 @@ export class Application {
     const afterHandlers = handler.after ?? [];
     let afterHandlersDone = undefined;
     while (true) {
-      if (afterHandlers.length === 0) break;
-      if (afterHandlersDone === StopFunctionSymbol) break;
       const afterHandler = afterHandlers.shift();
-      if (!afterHandler) return this.notFoundResponse();
+      if (afterHandlersDone === StopFunctionSymbol) break;
+      if (!afterHandler) break;
+      if (error) break;
       try {
-        afterHandlersDone = await Promise.resolve(afterHandler(_request, StopFunction, error));
+        afterHandlersDone = await Promise.resolve(afterHandler(_request, StopFunction));
       } catch (afterError: unknown) {
+        error = afterError instanceof Error ? afterError : new Error('Unknown Error', { cause: afterError });
         this.logger.error('Error in after middleware', {
-          error: afterError instanceof Error ? afterError : new Error('Unknown Error', { cause: afterError }),
-        })
+          error,
+        });
       }
 
       // If we didn't get a response from the before or main handler let the after reply
@@ -276,7 +278,20 @@ export class Application {
     }
 
     // If we still have no response but do have an error render that out
-    if (!response) return this.errorResponse(error instanceof Error ? error.message : 'Internal Server Error');
+    if (!response || response === StopFunctionSymbol || error) {
+      // Try the handler's error handler first
+      try {
+        if (handler.error) return handler.error(_request, error);
+      } catch { }
+
+      // Try the global error handler
+      try {
+        if (this.config.web?.errorHandler) return this.config.web?.errorHandler(_request, error);
+      } catch { }
+
+      // Fall back to the default error handler
+      return this.errorResponse(error instanceof Error ? error.message : 'Internal Server Error');
+    }
 
     // Custom response
     if (response instanceof Response) return response;

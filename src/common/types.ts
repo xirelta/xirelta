@@ -20,6 +20,7 @@ export type ResponseBody<StrictMode extends boolean = false> = Simplify<MaybePro
 export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, T extends ResponseBody<StrictMode>> = {
     before?: Handler<StrictMode, Method, Path, T>[];
     after?: Handler<StrictMode, Method, Path, T>[];
+    error?: (request: Parameters<Handler<StrictMode, Method, Path, T>>[0], error: Error | undefined) => T;
 } & ((
     /**
      * The current request.
@@ -62,8 +63,7 @@ export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*',
      * Return this function to stop the route from processing.
      */
     stop: () => Promise<Symbol>,
-    /**
-     * This will be set if an error occurred in this request in an earlier middleware.
-     */
-    error?: Error,
 ) => T);
+
+export type ErrorHandler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, T extends ResponseBody<StrictMode>> =
+    (request: Parameters<Handler<StrictMode, Method, Path, T>>[0], error: Error | undefined) => ReturnType<Handler<StrictMode, Method, Path, T>>;
