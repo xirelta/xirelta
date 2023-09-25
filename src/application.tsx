@@ -230,8 +230,7 @@ export class Application {
     this.server = Bun.serve({
       port,
       fetch: async (request) => {
-        Bun.gc(true);
-        return this.fetch(request);
+        return await this.fetch(request);
       }
     });
 
