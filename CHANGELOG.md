@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.48](https://github.com/xirelta/xirelta/compare/v0.0.47...v0.0.48) (2023-09-25)
+
+
+### Features
+
+* health check ([c3665fe](https://github.com/xirelta/xirelta/commit/c3665fead2a983e56bdc52c2ca044a90e1e85f17))
+
 ### [0.0.47](https://github.com/xirelta/xirelta/compare/v0.0.46...v0.0.47) (2023-09-25)
 
 
