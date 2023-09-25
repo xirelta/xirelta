@@ -1,6 +1,6 @@
 import '@total-typescript/ts-reset';
 import { expect, test } from 'bun:test';
-import { Application } from '.';
+import { Application, RouteWithParams } from '.';
 import { Logger } from '@imlunahey/logger';
 import queryString from 'query-string';
 
@@ -187,5 +187,39 @@ test('application/x-www-form-urlencoded', async () => {
         }
     }).then(response => response.json());
     expect(sendForm).toStrictEqual({ body: form });
+    await app.stop();
+});
+
+test('middleware', async () => {
+    const app = new Application({
+        logger: new Logger({
+            service: 'test',
+        }),
+        web: {
+            port: 0,
+        }
+    });
+
+    type Route = RouteWithParams<'GET', '/:param'>;
+
+    const route: Route = ({ method, params: { param } }) => ({
+        method,
+        param,
+    });
+
+    route.before = [((request, next) => {
+        request.context.started = new Date().getTime().toString();
+        return next();
+    })];
+
+    route.after = [((request, next) => {
+        console.log(`${request.path} took ${new Date().getTime() - Number(request.context.started)}ms`);
+        return next();
+    })];
+
+    app.get('/:param', route);
+
+    const server = await app.start();
+    expect(await fetch(`http://localhost:${server.port}/GET`, { method: 'GET' }).then(response => response.json())).toStrictEqual({ method: 'GET', param: 'GET' });
     await app.stop();
 });

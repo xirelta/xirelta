@@ -15,9 +15,12 @@ export type MaybePromise<T> = T | Promise<T>;
 
 export type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 
-export type ResponseBody<StrictMode extends boolean = false> = Simplify<MaybePromise<ReactNode> | MaybePromise<Response> | MaybePromise<StrictMode extends true ? JsonValue : unknown>>;
+export type ResponseBody<StrictMode extends boolean = false> = Simplify<MaybePromise<ReactNode> | MaybePromise<Response> | MaybePromise<StrictMode extends true ? JsonValue : unknown>> | MaybePromise<void>;
 
-export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, Body extends ResponseBody<StrictMode>> = (request: Simplify<OmitNever<{
+export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*', Path extends string, T extends ResponseBody<StrictMode>> = {
+    before?: Handler<StrictMode, Method, Path, T>[];
+    after?: Handler<StrictMode, Method, Path, T>[];
+} & ((request: Simplify<OmitNever<{
     /**
      * Path parameters extracted from the URL.
      */
@@ -46,4 +49,8 @@ export type Handler<StrictMode extends boolean, Method extends HttpMethod | '*',
      * The request body, if present.
      */
     body: Method extends 'GET' ? undefined : JsonValue;
-}>>) => Simplify<Body>;
+    /**
+     * Shared context within the current request.
+     */
+    context: Record<string, unknown>;
+}>>, next: () => Promise<void>) => Simplify<T>);

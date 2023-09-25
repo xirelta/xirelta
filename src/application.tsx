@@ -31,11 +31,11 @@ export type Config = {
 
 export class Application {
   private handlers = {
-    '*': new Map<string, Handler<any, any, any, any>>(),
-    GET: new Map<string, Handler<any, any, any, any>>(),
-    POST: new Map<string, Handler<any, any, any, any>>(),
-    PUT: new Map<string, Handler<any, any, any, any>>(),
-    DELETE: new Map<string, Handler<any, any, any, any>>(),
+    '*': new Map<string, any>(),
+    GET: new Map<string, any>(),
+    POST: new Map<string, any>(),
+    PUT: new Map<string, any>(),
+    DELETE: new Map<string, any>(),
   };
   private server?: Server;
   public readonly logger: Exclude<Config['logger'], undefined>;
@@ -150,17 +150,20 @@ export class Application {
     };
   }
 
+  private notFoundResponse() {
+    return new Response('404 - Page not found', {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
+  }
+
   private async fetch(request: Request) {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = (request.method as HttpMethod) ?? ('GET' as const).toUpperCase();
     const match = getHandlerForURL(path, this.handlers['*'], this.config.web?.strictMatching) ?? getHandlerForURL(path, this.handlers[method], this.config.web?.strictMatching);
-    if (!match)
-      return new Response('404 - Page not found', {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-        },
-      });
+    if (!match) return this.notFoundResponse();
 
     const { handler, pattern } = match;
     const params = extractPathParams(path, pattern) ?? {};
@@ -188,20 +191,41 @@ export class Application {
         }
       }
     });
-    const response = await Promise.resolve(
-      handler({
-        params,
-        query,
-        path,
-        headers: {
-          cookie,
-          ...safeHeaders,
-        },
-        safeHeaders,
-        method,
-        body,
-      })
-    );
+    const _request = {
+      params,
+      query,
+      path,
+      headers: {
+        cookie,
+        ...safeHeaders,
+      },
+      safeHeaders,
+      method,
+      body,
+      context: {},
+    };
+
+    const NextFunction = async () => { };
+
+    // Loop through all handler before middleware, then the handler itself and lastly the after middleware
+    // If any of them return a response we return it and stop going through middleware
+    // Note: next() does nothing its just there for DX
+    const beforeAndMainHandler = [...handler.before ?? [], handler];
+    let response: any = undefined;
+    while (response === undefined && beforeAndMainHandler.length !== 0) {
+      const currentHandler = beforeAndMainHandler.shift();
+      if (!currentHandler) return this.notFoundResponse();
+      response = await Promise.resolve(currentHandler(_request, NextFunction));
+    }
+
+    // Now that the request has a response run all of the after handlers until one of them returns
+    const afterHandlers = handler.after ?? [];
+    let afterHandlersDone = undefined;
+    while (afterHandlersDone !== NextFunction && afterHandlers.length !== 0) {
+      const afterHandler = afterHandlers.shift();
+      if (!afterHandler) return this.notFoundResponse();
+      afterHandlersDone = await Promise.resolve(afterHandler(_request, NextFunction));
+    }
 
     // Custom response
     if (response instanceof Response) return response;
