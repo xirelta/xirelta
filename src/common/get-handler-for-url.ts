@@ -20,12 +20,6 @@ export const getHandlerForURL = (url: string, routeMap: Map<string, Handler<any,
         }
     }
 
-    console.info('Found handlers for URL', {
-        url,
-        routes: [...routeMap.entries()],
-        matches,
-    });
-
     // Sort the matches to prioritize more specific (non-parameterized) patterns
     const sortedMatches = matches.sort((a, b) => {
         const aIsParam = a.pattern.includes(":");
