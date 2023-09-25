@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.41](https://github.com/xirelta/xirelta/compare/v0.0.40...v0.0.41) (2023-09-25)
+
+
+### Bug Fixes
+
+* ensure method is always uppercase ([74fbb2b](https://github.com/xirelta/xirelta/commit/74fbb2b8df6acba959e6d01a5b66dee4d5cce48b))
+
 ### [0.0.40](https://github.com/xirelta/xirelta/compare/v0.0.39...v0.0.40) (2023-09-25)
 
 ### [0.0.39](https://github.com/xirelta/xirelta/compare/v0.0.38...v0.0.39) (2023-09-24)
