@@ -183,6 +183,7 @@ export class Application {
     const releaseId = await import(`${process.cwd()}/package.json`).then(pkg => `${pkg.version}+${getCommitHash(process.cwd())}`).catch(() => 'unknown');
 
     // If health checks are enabled add them
+    // See: https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check
     if (this.config.web?.healthCheck) this.get('/.well-known/health', () => {
       const fields = {
         version,
@@ -196,13 +197,21 @@ export class Application {
         status: 'fail',
       }), {
         status: 503,
+        headers: {
+          'content-type': 'application/health+json',
+        },
       });
 
       // Otherwise all is okay
-      return {
+      return new Response(JSON.stringify({
         ...fields,
         status: 'pass',
-      };
+      }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/health+json',
+        },
+      });
     });
 
     // Load pages directory
