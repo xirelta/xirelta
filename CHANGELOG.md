@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.47](https://github.com/xirelta/xirelta/compare/v0.0.46...v0.0.47) (2023-09-25)
+
+
+### Features
+
+* stop function and error handling ([59595cb](https://github.com/xirelta/xirelta/commit/59595cbec9e6df2fd97db4285c2b1eddd6b9236c))
+
+
+### Bug Fixes
+
+* error handling ([c1031e3](https://github.com/xirelta/xirelta/commit/c1031e327094310c1dd1d81037fd31079d563ea3))
+
 ### [0.0.46](https://github.com/xirelta/xirelta/compare/v0.0.45...v0.0.46) (2023-09-25)
 
 

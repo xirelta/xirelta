@@ -1,6 +1,6 @@
 {
   "name": "xirelta",
-  "version": "0.0.46",
+  "version": "0.0.47",
   "main": "dist/index.js",
   "module": "src/index.ts",
   "description": "A lightweight web framework for building web applications in TypeScript with Bun. It is designed to be flexible and easy to use, allowing you to create web services and applications with minimal effort.",
