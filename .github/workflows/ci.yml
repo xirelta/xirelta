@@ -71,8 +71,9 @@ jobs:
 
       - name: Generate CHANGELOG for Github release
         id: changelog
-        uses: requarks/changelog-action@v1
+        uses: requarks/changelog-action@7c43585cb7f05f037b7f27340e6762653875a99f
         with:
+          excludeScopes: "release"
           token: ${{ github.token }}
           fromTag: ${{ steps.current_tag.outputs.current_tag }}
           toTag: ${{ steps.previous_tag.outputs.previous_tag }}
