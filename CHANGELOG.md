@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.51](https://github.com/xirelta/xirelta/compare/v0.0.50...v0.0.51) (2023-10-23)
+
+
+### Bug Fixes
+
+* doctype not being added to html ([5493cf9](https://github.com/xirelta/xirelta/commit/5493cf984a03b4b5b64785bb7109f77942ec6fd2))
+
 ### [0.0.50](https://github.com/xirelta/xirelta/compare/v0.0.49...v0.0.50) (2023-09-26)
 
 ### [0.0.49](https://github.com/xirelta/xirelta/compare/v0.0.48...v0.0.49) (2023-09-25)
