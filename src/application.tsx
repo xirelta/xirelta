@@ -373,7 +373,9 @@ export class Application {
 
     // JSX response
     const Node = typeof response === 'function' ? response : () => response;
-    return new Response(renderToStaticMarkup(<Node />), {
+    const renderedNode = renderToStaticMarkup(<Node />);
+    const html = renderedNode.startsWith('<html') ? `<!DOCTYPE html>${renderedNode}` : renderedNode;
+    return new Response(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
       },
